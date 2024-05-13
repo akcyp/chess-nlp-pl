@@ -1,0 +1,81 @@
+Chess {
+  Exp = Action
+
+  Coord = "a".."h" "1".."8"
+
+	KingNormative = "król"
+  KingAccusative = "króla"
+  KingAblative = "królem"
+
+  QueenNormative = "królowa" | "dama" | "hetman"
+  QueenAccusative = "królową" | "damę" | "hetmana"
+  QueenAblative = "królową" | "damą" | "hetmanem"
+
+  KnightNormative = "skoczek" | "koń"
+  KnightAccusative = "skoczka" | "konia"
+  KnightAblative = "skoczkiem" | "koniem"
+
+  BishopNormative = "goniec" | "laufer"
+  BishopAccusative = "gońca" | "laufra"
+  BishopAblative = "gońcem" | "laufrem"
+
+  RookNormative = "wieża"
+  RookAccusative = "wieżę"
+  RookAblative = "wieżą"
+
+  PawnNormative = "pionek" | "pion"
+  PawnAccusative = "pionka" | "piona"
+  PawnAblative = "pionkiem" | "pionem"
+
+	PieceNormative = KingNormative | QueenNormative | KnightNormative | BishopNormative | RookNormative | PawnNormative
+  PieceAccusative = KingAccusative | QueenAccusative | KnightAccusative | BishopAccusative | RookAccusative | PawnAccusative
+  PieceAblative = KingAblative | QueenAblative | KnightAblative | BishopAblative | RookAblative | PawnAblative
+
+	PieceNormativeFrom = PieceNormative "z" Coord   // skoczek z c4
+	PieceAccusativeFrom = PieceAccusative "z" Coord // skoczka z c4
+	PieceAblativeFrom = PieceAblative "z" Coord     // skoczkiem z c4
+
+	PieceNormativeTo = PieceNormative "na" Coord    // skoczek na c4
+	PieceAccusativeTo = PieceAccusative "na" Coord  // skoczka na c4
+
+  // Complex
+
+	MoveSourceNormative = Coord | PieceNormativeFrom    // a1, wieża z a1
+
+	CaptureMove
+    = MoveSourceNormative "bije" Coord                // a1 bije a4, wieża z a1 bije a4 
+    | MoveSourceNormative "bije" PieceAccusativeFrom  // a1 bije piona z a4, wieża z a1 bije piona z a4
+    | MoveSourceNormative "bije" PieceAccusativeTo    // a1 bije piona na a4, wieża z a1 bije piona na a4
+
+  ReCaptureMove = "odbijam" PieceAblativeFrom // odbijam wieżą z c2
+
+  FigureMove = PieceNormative Coord // skoczek c3
+  PawnMove = Coord // e4, e5
+
+ 	BasicMove
+ 		= MoveSourceNormative "" Coord    // a2 a4, pion z a2 a4
+    | MoveSourceNormative "na" Coord  // a2 na a4, pion z a2 na a4
+
+  MoveWithCoords = CaptureMove | BasicMove | PieceNormativeTo | FigureMove | PawnMove | ReCaptureMove // <all above>
+
+  MoveWithPromotion = MoveWithCoords "z promocją na" PieceAccusative // <all above> z promocją na hetmana
+
+  CaptureEnPassant= "bicie w przelocie"
+
+  CastlingQueenside = "roszada długa" | "roszada hetmańska" | "roszada na skrzydle hetmańskim"
+  CastlingKingside = "roszada krótka" | "roszada królewska" | "roszada na skrzydle królewskim"
+  Castling = CastlingKingside | CastlingQueenside
+
+  Move = MoveWithPromotion | MoveWithCoords | CaptureEnPassant | Castling
+
+  ActionPlayAsWhite = "graj białymi"
+  ActionPlayAsBlack = "graj czarnymi"
+  ActionPlayAsOpponentColor = "zmień stronę"
+  ActionChangeSide = ActionPlayAsWhite | ActionPlayAsBlack | ActionPlayAsOpponentColor
+
+  ActionStart = "start" | "rozpocznij grę"
+	ActionResign = "poddaje się" | "poddaje" | "rezygnuje"
+  ActionRematch = "zagrajmy jeszcze raz" | "rewanż"
+
+  Action = ActionChangeSide | ActionStart | ActionResign | ActionRematch | Move
+}

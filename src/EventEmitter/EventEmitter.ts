@@ -3,7 +3,7 @@ type Callback = (...args: any[]) => void;
 export class EventEmitter {
   private _events: Record<string, Callback[]> = {};
 
-  protected on(key: string, listener: Callback) {
+  public on(key: string, listener: Callback) {
     if(!this._events[key]){
       this._events[key] = [];
     }
@@ -11,7 +11,7 @@ export class EventEmitter {
     return this;
   }
 
-  protected off(key: string, listener: Callback) {
+  public off(key: string, listener: Callback) {
     if(this._events[key]) {
       if(listener instanceof Function) {
         const idx = this._events[key].indexOf(listener);
@@ -35,7 +35,7 @@ export class EventEmitter {
     return this;
   }
 
-  protected once(key: string, listener: Callback) {
+  public once(key: string, listener: Callback) {
     const self = this;
     this.on(key, function cb(...args: any[]){
       self.off(key, cb);
