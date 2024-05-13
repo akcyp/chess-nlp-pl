@@ -239,7 +239,7 @@ export class GameCoreController {
           san = san.replace(/\?/g, lastMove.to);
         }
         san = san.replace(/([prbnqk])([a-h][1-8])/ig, (_, piece, coord) => {
-          return (this.state.playAs === 'white' ? piece.toUpperCase() : piece.toLowerCase()) + coord;
+          return piece.toUpperCase() + coord;
         });
         san = san.replace(/<!([prbnqk])([a-h][1-8])>/i, (_, piece, coord) => {
           const coordPiece = this.chess.get(coord);
