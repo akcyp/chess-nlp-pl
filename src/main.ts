@@ -3,7 +3,6 @@ import './style.css';
 import { GameCoreController } from './GameCore/GameCore';
 import { StockfishEngineCtrl } from './StockfishCtrl/StockfishCtrl';
 import { SpeechCtrl, SpeechResult } from './SpeechCtrl/SpeechCtrl';
-import { parse } from './SpeechCtrl/grammarParser';
 
 const aiEngine = new StockfishEngineCtrl();
 aiEngine.toggleDebugging(true);
@@ -14,17 +13,13 @@ const game = new GameCoreController(document.querySelector<HTMLDivElement>('#mai
   },
 });
 
-(globalThis as any).game = game;
-
-
 const speechAPI = new SpeechCtrl();
-speechAPI.on('speech', ({ transcript, confidence }: SpeechResult) => {
-  const san = parse(transcript);
-  console.log({
-    transcript,
-    confidence,
-    san,
-  });
+speechAPI.on('speech', (results: SpeechResult[]) => {
+  console.log(results);
+  if (results.length) {
+    const action = results[0];
+    game.exec(action.san);
+  }
 })
 
 document.addEventListener('keydown', (event) => {

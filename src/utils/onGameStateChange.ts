@@ -8,8 +8,16 @@ export const onGameOver = (board: Api) => {
     selectable: {
       enabled: false,
     },
-    premovable: {
-      enabled: false,
+  });
+};
+
+export const onGameStart = (board: Api) => {
+  board.set({
+    draggable: {
+      enabled: true,
+    },
+    selectable: {
+      enabled: true,
     },
   });
 };

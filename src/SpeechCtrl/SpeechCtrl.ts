@@ -1,4 +1,5 @@
 import { EventEmitter } from "../EventEmitter/EventEmitter";
+import { parse } from "./grammarParser";
 
 // Polyfills
 globalThis.SpeechRecognition ??= webkitSpeechRecognition;
@@ -8,6 +9,7 @@ globalThis.SpeechRecognitionEvent ??= webkitSpeechRecognitionEvent;
 export interface SpeechResult {
   transcript: string;
   confidence: number;
+  san: string;
 }
 
 export class SpeechCtrl extends EventEmitter {
@@ -20,7 +22,7 @@ export class SpeechCtrl extends EventEmitter {
     this.recognition.grammars = this.speechRecognitionList;
     this.recognition.lang = 'pl-PL';
     this.recognition.interimResults = false;
-    this.recognition.maxAlternatives = 1;
+    this.recognition.maxAlternatives = 10;
   }
 
   stop() {
@@ -38,8 +40,20 @@ export class SpeechCtrl extends EventEmitter {
     this.recognition.start();
     this.recognition.onresult = (event) => {
       console.log('result', event);
-      const { transcript, confidence } = event.results[0][0];
-      this.emit('speech', { transcript: transcript.toLowerCase(), confidence });
+      const results: SpeechResult[] = [];
+      for (const resultList of event.results) {
+        for (const result of resultList) {
+          const transcript = result.transcript.toLowerCase();
+          const san = parse(transcript);
+          if (!san) continue;
+          results.push({
+            transcript,
+            confidence: result.confidence,
+            san,
+          })
+        }
+      }
+      this.emit('speech', results);
     };
 
     this.recognition.onspeechend = (event) => {

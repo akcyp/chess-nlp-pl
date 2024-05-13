@@ -74,7 +74,7 @@ Chess {
   ActionChangeSide = ActionPlayAsWhite | ActionPlayAsBlack | ActionPlayAsOpponentColor
 
   ActionStart = "start" | "rozpocznij grę"
-	ActionResign = "poddaje się" | "poddaje" | "rezygnuje"
+	ActionResign = "poddaję się" | "poddaję" | "rezygnuję"
   ActionRematch = "zagrajmy jeszcze raz" | "rewanż"
 
   Action = ActionChangeSide | ActionStart | ActionResign | ActionRematch | Move

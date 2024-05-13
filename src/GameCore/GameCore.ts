@@ -2,15 +2,39 @@ import { Chess, Move, PieceSymbol } from 'chess.js';
 import { Chessground } from 'chessground';
 import { Api } from 'chessground/api';
 import { Key, Role } from 'chessground/types';
+import { Config } from 'chessground/config';
 
 import { PromotionCtrl } from '../PromotionCtrl/PromotionCtrl';
 import { toDests } from '../utils/toDests';
 import { toColor } from '../utils/toColor';
-import { onGameOver } from '../utils/onGameOver';
+import { onGameOver, onGameStart } from '../utils/onGameStateChange';
 import { colorFromSymbol } from '../utils/colorFromSymbol';
 import { pieceFromSymbol } from '../utils/pieceFromSymbol';
 
 import './GameCore.scss';
+import { delay } from '../utils/delay';
+
+const INITIAL_CONFIG: Config = {
+  orientation: 'white',
+  disableContextMenu: true,
+  animation: {
+    enabled: true,
+    duration: 200,
+  },
+  draggable: {
+    enabled: false,
+    showGhost: true,
+  },
+  selectable: {
+    enabled: false,
+  },
+  drawable: {
+    enabled: false,
+  },
+  premovable: {
+    enabled: false,
+  },
+};
 
 interface GameCoreMove {
   from: Key;
@@ -33,34 +57,36 @@ export class GameCoreController {
 
   private wrapperElement = Object.assign(document.createElement('div'), { className: 'game-wrapper' });
 
+  private state = {
+    gameStarted: false,
+    gameOver: false,
+    playAs: 'white' as 'white' | 'black',
+  };
+
   constructor(container: HTMLDivElement, private config: GameCoreControllerConfig) {
     const game = Object.assign(document.createElement('div'), { className: 'game' });
     this.wrapperElement.appendChild(game);
-    this.board = Chessground(game, {
-      orientation: 'white',
-      disableContextMenu: true,
-      animation: {
-        enabled: true,
-        duration: 200,
-      },
+    this.board = Chessground(game, INITIAL_CONFIG);
+    container.appendChild(this.wrapperElement);
+    this.reset();
+  }
+
+  private reset() {
+    this.state.gameStarted = false;
+    this.state.gameOver = false;
+    this.chess.reset();
+    this.board.set({
       movable: {
-        color: 'white',
+        color: this.state.playAs,
         free: false,
         showDests: true,
         dests: toDests(this.chess),
         events: {
           after: this.onUserMove.bind(this),
-        }
-      },
-      draggable: {
-        showGhost: true
-      },
-      drawable: {
-        enabled: false,
+        },
       },
     });
     this.redrawPromotion();
-    container.appendChild(this.wrapperElement);
   }
 
   private redrawPromotion() {
@@ -70,14 +96,18 @@ export class GameCoreController {
     if (newPromotionElement) this.wrapperElement.appendChild(newPromotionElement);
   }
 
+  private setSides() {
+    this.board.set({
+      orientation: this.state.playAs,
+      movable: {
+        color: this.state.playAs,
+      },
+    });
+  }
+
   private async playUserMove(orig: Key, dest: Key, promotion?: Role) {
     const move = this.chess.move({ from: orig, to: dest, promotion: promotion?.charAt(0) });
     this.onChessMove(move);
-    if (this.chess.isGameOver()) {
-      onGameOver(this.board);
-      return;
-    }
-    await this.playComputerMove();
   }
 
   private onUserMove(orig: Key, dest: Key) {
@@ -89,15 +119,24 @@ export class GameCoreController {
   }
 
   private async playComputerMove() {
+    await delay(300);
     const computerMove = await this.config.getComputerMove(this.chess);
     const move = this.chess.move({ from: computerMove.from, to: computerMove.to, promotion: computerMove.promotion });
     this.board.move(move.from, move.to);
+    this.onChessMove(move);
+  }
+
+  private onChessMove(move: Move) {
     if (move.promotion) {
       this.board.setPieces(new Map([[move.to, { color: colorFromSymbol(move.color), role: pieceFromSymbol(move.promotion), promoted: true }]]));
     }
-    this.onChessMove(move);
-
+    if (move.flags.includes('e')) {
+      // En-passant capture
+      const caputuredPosition = `${move.to.charAt(0)}${Number(move.to.charAt(1)) + (move.color === 'w' ? -1 : 1)}` as Key;
+      this.board.setPieces(new Map([[caputuredPosition, undefined]]));
+    }
     if (this.chess.isGameOver()) {
+      this.state.gameOver = true;
       onGameOver(this.board);
       return;
     }
@@ -105,17 +144,100 @@ export class GameCoreController {
       turnColor: toColor(this.chess),
       movable: {
         color: toColor(this.chess),
-        dests: toDests(this.chess)
+        dests: this.state.playAs === toColor(this.chess) ? toDests(this.chess) : new Map(),
       },
     });
-    this.board.playPremove();
+    if (this.state.playAs !== toColor(this.chess)) {
+      this.playComputerMove();
+    }
   }
 
-  private onChessMove(move: Move) {
-    if (move.flags.includes('e')) {
-      // En-passant capture
-      const caputuredPosition = `${move.to.charAt(0)}${Number(move.to.charAt(1)) + (move.color === 'w' ? -1 : 1)}` as Key;
-      this.board.setPieces(new Map([[caputuredPosition, undefined]]));
+  private playSAN(san: string) {
+    if (this.state.gameStarted && !this.state.gameOver && toColor(this.chess) !== this.state.playAs) {
+      console.log('not your turn');
+      return;
+    }
+    try {
+      const move = this.chess.move(san);
+      this.board.move(move.from, move.to);
+      this.onChessMove(move);
+    } catch (_) {
+      console.log('invalid move: ' + san);
+    }
+  }
+
+  public exec(action: string) {
+    switch (action) {
+      case 'start': {
+        this.reset();
+        this.state.gameStarted = true;
+        onGameStart(this.board);
+        if (this.state.playAs !== toColor(this.chess)) {
+          this.playComputerMove();
+        }
+        break;
+      };
+      case 'resign': {
+        if (this.state.gameStarted && !this.state.gameOver) {
+          this.state.gameOver = true;
+          onGameOver(this.board);
+        }
+        break;
+      };
+      case 'rematch': {
+        if (this.state.gameStarted && this.state.gameOver) {
+          this.reset();
+        }
+        break;
+      };
+      case 'side=w': {
+        if (!this.state.gameStarted) {
+          this.state.playAs = 'white';
+          this.setSides();
+        }
+        break;
+      };
+      case 'side=b': {
+        if (!this.state.gameStarted) {
+          this.state.playAs = 'black';
+          this.setSides();
+        }
+        break;
+      };
+      case 'side=!': {
+        if (!this.state.gameStarted) {
+          this.state.playAs = this.state.playAs === 'white' ? 'black' : 'white';
+          this.setSides();
+        }
+        break;
+      };
+      case 'enpassant': {
+        const moves = this.chess.moves({ verbose: true });
+        const enpassantMove = moves.find(move => move.flags.includes('e'));
+        if (enpassantMove) {
+          this.playSAN(enpassantMove.san);
+        }
+        break;
+      };
+      default: {
+        const lastMove = this.chess.history({ verbose: true }).at(-1);
+        let san = action;
+        if (lastMove && lastMove.flags.includes('c')) {
+          san = san.replace(/\?/g, lastMove.to);
+        }
+        san = san.replace(/([prbnqk])([a-h][1-8])/ig, (_, piece, coord) => {
+          return (this.state.playAs === 'white' ? piece.toUpperCase() : piece.toLowerCase()) + coord;
+        });
+        san = san.replace(/<!([prbnqk])([a-h][1-8])>/i, (_, piece, coord) => {
+          const coordPiece = this.chess.get(coord);
+          const pieceColor = coordPiece.color === 'w' ? 'white' : 'black';
+          if (coordPiece?.type === piece && pieceColor !== this.state.playAs) {
+            return '';
+          }
+          return 'INVALID MOVE';
+        });
+        this.playSAN(san);
+      }
     }
   }
 }

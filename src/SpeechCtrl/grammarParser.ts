@@ -82,7 +82,7 @@ const evals: Partial<ChessActionDict<any>> = {
     return `${source.piece}${source.coord}x${lastCapturePosition}`;
   },
 
-  FigureMove: (piece, coord) => `${piece.piece}${coord.coord}`,
+  FigureMove: (piece, coord) => `${piece.piece === 'p' ? '' : piece.piece}${coord.coord}`,
   PawnMove: (coord) => coord.coord,
 
   BasicMove: (source, _, coord) => `${source.eval()}${coord.coord}`,
@@ -103,8 +103,8 @@ const evals: Partial<ChessActionDict<any>> = {
     return 'enpassant'
   },
 
-  CastlingKingside: (_) => '0-0',
-  CastlingQueenside: (_) => '0-0-0',
+  CastlingKingside: (_) => 'O-O',
+  CastlingQueenside: (_) => 'O-O-O',
   Castling: (castling) => castling.eval(),
 
   Move: (move) => move.eval(),
