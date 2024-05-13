@@ -44,6 +44,7 @@ interface GameCoreMove {
 
 interface GameCoreControllerConfig {
   getComputerMove: (chess: Chess) => Promise<GameCoreMove>;
+  onGameStatusChange: (status: 'started' | 'finished' | 'initied') => void;
 }
 
 export class GameCoreController {
@@ -76,6 +77,8 @@ export class GameCoreController {
     this.state.gameOver = false;
     this.chess.reset();
     this.board.set({
+      fen: this.chess.fen(),
+      lastMove: undefined,
       movable: {
         color: this.state.playAs,
         free: false,
@@ -101,6 +104,16 @@ export class GameCoreController {
       orientation: this.state.playAs,
       movable: {
         color: this.state.playAs,
+      },
+    });
+  }
+
+  private setBoardTurn() {
+    this.board.set({
+      turnColor: toColor(this.chess),
+      movable: {
+        color: toColor(this.chess),
+        dests: this.state.playAs === toColor(this.chess) ? toDests(this.chess) : new Map(),
       },
     });
   }
@@ -137,16 +150,11 @@ export class GameCoreController {
     }
     if (this.chess.isGameOver()) {
       this.state.gameOver = true;
+      this.config.onGameStatusChange('finished');
       onGameOver(this.board);
       return;
     }
-    this.board.set({
-      turnColor: toColor(this.chess),
-      movable: {
-        color: toColor(this.chess),
-        dests: this.state.playAs === toColor(this.chess) ? toDests(this.chess) : new Map(),
-      },
-    });
+    this.setBoardTurn();
     if (this.state.playAs !== toColor(this.chess)) {
       this.playComputerMove();
     }
@@ -171,7 +179,9 @@ export class GameCoreController {
       case 'start': {
         this.reset();
         this.state.gameStarted = true;
+        this.config.onGameStatusChange('started');
         onGameStart(this.board);
+        this.setBoardTurn();
         if (this.state.playAs !== toColor(this.chess)) {
           this.playComputerMove();
         }
@@ -180,13 +190,16 @@ export class GameCoreController {
       case 'resign': {
         if (this.state.gameStarted && !this.state.gameOver) {
           this.state.gameOver = true;
+          this.config.onGameStatusChange('finished');
           onGameOver(this.board);
         }
         break;
       };
       case 'rematch': {
         if (this.state.gameStarted && this.state.gameOver) {
+          console.log('rematch');
           this.reset();
+          this.config.onGameStatusChange('initied');
         }
         break;
       };

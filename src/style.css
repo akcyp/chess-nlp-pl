@@ -29,3 +29,39 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+#panel > div {
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  gap: 4px;
+}
+
+button {
+  display: inline-block;
+  outline: 0;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  border-radius: 4px;
+  font-size: 13px;
+  height: 30px;
+  color: white;
+  padding: 0 20px;
+}
+
+button.red {
+  background: linear-gradient(to right, rgb(230, 30, 77) 0%, rgb(227, 28, 95) 50%, rgb(215, 4, 102) 100%);
+}
+
+button.blue {
+  background-color: rgb(84, 105, 212);
+}
+
+button.green {
+  background-color: #2ea44f;
+}
+
+button.violet {
+  background-color: #9147ff;
+}

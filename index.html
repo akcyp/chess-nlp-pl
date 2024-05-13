@@ -8,6 +8,18 @@
   </head>
   <body>
     <div id="main"></div>
+    <div id="panel">
+      <div id="pre-game">
+        <button class="green" id="action-start">Start</button>
+        <button class="violet" id="action-side">Zmień stronę</button>
+      </div>
+      <div id="in-game" style="display: none;">
+        <button class="red" id="action-resign">Poddaj się</button>
+      </div>
+      <div id="post-game" style="display: none;">
+        <button class="blue" id="action-rematch">Rewanż</button>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
