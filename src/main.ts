@@ -37,6 +37,16 @@ const game = new GameCoreController(document.querySelector<HTMLDivElement>('#mai
   },
 });
 
+const startBtn = document.querySelector('#action-start')!;
+const sideBtn = document.querySelector('#action-side')!
+const rematchBtn = document.querySelector('#action-rematch')!
+const resignBtn = document.querySelector('#action-resign')!
+
+startBtn.addEventListener('click', () => game.exec('start'));
+sideBtn.addEventListener('click', () => game.exec('side=!'));
+resignBtn.addEventListener('click', () => game.exec('resign'));
+rematchBtn.addEventListener('click', () => game.exec('rematch'));
+
 const speechAPI = new SpeechCtrl();
 speechAPI.on('speech', (results: SpeechResult[]) => {
   console.log(results);
@@ -44,28 +54,30 @@ speechAPI.on('speech', (results: SpeechResult[]) => {
     const action = results[0];
     game.exec(action.san);
   }
-})
+});
+
+const pttBtn: HTMLDivElement = document.querySelector('#ptt-button')!;
+
+pttBtn.addEventListener('mousedown', () => {
+  speechAPI.start();
+  pttBtn.classList.add('active');
+});
+
+pttBtn.addEventListener('mouseup', () => {
+  speechAPI.stop();
+  pttBtn.classList.remove('active');
+});
 
 document.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
     speechAPI.start();
+    pttBtn.classList.add('active');
   }
 });
 
 document.addEventListener('keyup', (event) => {
   if (event.code === 'Space') {
     speechAPI.stop();
+    pttBtn.classList.remove('active');
   }
 });
-
-const startBtn = document.querySelector('#action-start')!;
-startBtn.addEventListener('click', () => game.exec('start'));
-
-const sideBtn = document.querySelector('#action-side')!
-sideBtn.addEventListener('click', () => game.exec('side=!'));
-
-const resignBtn = document.querySelector('#action-resign')!
-resignBtn.addEventListener('click', () => game.exec('resign'));
-
-const rematchBtn = document.querySelector('#action-rematch')!
-rematchBtn.addEventListener('click', () => game.exec('rematch'));

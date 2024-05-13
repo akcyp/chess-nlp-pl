@@ -65,3 +65,40 @@ button.green {
 button.violet {
   background-color: #9147ff;
 }
+
+#ptt-button {
+  margin-right: 15px;
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  border: 2px solid transparent;
+}
+
+#ptt-button.active > img {
+  transform: scale(0.8);
+}
+
+#ptt-button.active::before {
+  display: block;
+  content: '';
+  position: absolute;
+  background: linear-gradient(90deg, #ffffff00 0%, #fe0000 100%);
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  z-index: -1;
+  animation: rotate  1.3s 0.2s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
